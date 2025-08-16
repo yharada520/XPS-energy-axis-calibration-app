@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XPS Energy Axis Calibration – Result</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", sans-serif; margin: 24px; }
+    header h1 { margin: 0 0 8px 0; }
+    pre { background:#f7f7f7; padding:12px; border-radius:8px; overflow:auto; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; }
+    .row { display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap; }
+    .box { border:1px solid #ddd; padding:12px; border-radius:8px; }
+    .hint { color:#666; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Results</h1>
+    <p class="hint">Summary of metrics and selected spectra</p>
+  </header>
+
+  <section>
+    <h3>Summary</h3>
+    <pre>{{ summary }}</pre>
+  </section>
+
+  <section style="margin-top:16px;">
+    <h3>Details (per spectrum)</h3>
+    <table>
+      <thead>
+        <tr><th>Element</th><th>Name</th><th>Estimated Center (eV)</th><th>Peak Height</th></tr>
+      </thead>
+      <tbody>
+        {% for r in details %}
+        <tr>
+          <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ '%.4f'|format(r[2]) }}</td><td>{{ '%.4f'|format(r[3]) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section style="margin-top:16px;">
+    <h3>Peak Plots (zoomable)</h3>
+    {% if peaks_div_au %}<h4>Au</h4>{{ peaks_div_au|safe }}{% endif %}
+    {% if peaks_div_ag %}<h4>Ag</h4>{{ peaks_div_ag|safe }}{% endif %}
+    {% if peaks_div_cu %}<h4>Cu</h4>{{ peaks_div_cu|safe }}{% endif %}
+  </section>
+
+  <section style="margin-top:16px;" class="box">
+    <h3>Control Chart (Δ vs. time)</h3>
+    <div class="row">
+      <label>Instrument
+        <select id="instrument">
+          <option value="">(All)</option>
+          {% for inst in instruments %}
+            <option value="{{ inst }}" {% if inst == instrument_sel %}selected{% endif %}>{{ inst }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Start <input type="datetime-local" id="start" value="{{ start_sel }}"></label>
+      <label>End <input type="datetime-local" id="end" value="{{ end_sel }}"></label>
+      <label>Δ limit (eV) <input type="number" step="0.001" id="delta" value="{{ delta_limit_init }}"></label>
+      <label>Warn limit (eV) <input type="number" step="0.001" id="warn" value="{{ warn_limit_init }}"></label>
+      <button type="button" onclick="reloadChart()">Update</button>
+    </div>
+    {% if chart_available %}
+      <div style="margin-top:8px;">
+        <img id="chart" src="{{ chart_url }}" alt="control chart" style="max-width:100%; border:1px solid #ddd; padding:4px; border-radius:6px;" />
+      </div>
+      <div style="margin-top:8px;">
+        <a id="dl" href="#">Download PNG</a>
+      </div>
+    {% else %}
+      <p class="hint">No chart yet (this is the first run). Adjust filters then press Update.</p>
+    {% endif %}
+  </section>
+
+  <section style="margin-top:16px;">
+    <h3>Linearity Residuals</h3>
+    <p class="hint">{{ kpi_epsilon2 }}</p>
+    {% if linearity_available %}
+      <img src="/linearity.png" alt="linearity residuals" style="max-width:100%; border:1px solid #ddd; padding:4px; border-radius:6px;" />
+    {% else %}
+      <p class="hint">No linearity plot generated.</p>
+    {% endif %}
+  </section>
+
+  <p style="margin-top:16px;">
+    <a href="/">&#x25C0; Back</a> &nbsp;|&nbsp; <a href="/history">History</a>
+  </p>
+
+  <script>
+    const chartBase = "{{ chart_url }}";
+    function qs(){
+      const i = document.getElementById('instrument').value;
+      const s = document.getElementById('start').value;
+      const e = document.getElementById('end').value;
+      const d = document.getElementById('delta').value;
+      const w = document.getElementById('warn').value;
+      const q = new URLSearchParams();
+      if(i) q.set('instrument', i);
+      if(s) q.set('start', s);
+      if(e) q.set('end', e);
+      if(d) q.set('delta', d);
+      if(w) q.set('warn', w);
+      return q.toString();
+    }
+    function reloadChart(){
+      const q = qs();
+      const url = chartBase + (q ? ('?' + q) : '');
+      const img = document.getElementById('chart');
+      img.src = url + '&_=' + Date.now();
+      document.getElementById('dl').href = '/chart_download' + (q ? ('?' + q) : '');
+    }
+    // initialize download link
+    if (document.getElementById('dl')) reloadChart();
+  </script>
+</body>
+</html>

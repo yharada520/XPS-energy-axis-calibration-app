@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XPS Energy Axis Calibration – History</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; }
+    thead th { position: sticky; top: 0; background: #f7f7f7; }
+  </style>
+</head>
+<body>
+  <h1>Run History</h1>
+  <p><a href="/">&#x25C0; Back</a></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Timestamp</th><th>Instrument</th><th>Operator</th><th>Seed</th>
+        <th>ref_Au</th><th>ref_Ag</th><th>ref_Cu</th>
+        <th>mean_Au</th><th>mean_Ag</th><th>mean_Cu</th>
+        <th>Δ1_Au</th><th>Δ2_Ag</th><th>Δ4_Cu</th>
+        <th>ε₂</th><th>σ_R</th>
+        <th>U95_Au</th><th>U95_Ag</th><th>U95_Cu</th>
+        <th>resid_Au</th><th>resid_Ag</th><th>resid_Cu</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          {% for c in r %}
+            <td>{{ c }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

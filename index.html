@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XPS Energy Axis Calibration – Upload</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", sans-serif; margin: 24px; }
+    header h1 { margin: 0 0 8px 0; }
+    fieldset { margin: 16px 0; }
+    .row { display: flex; gap: 24px; flex-wrap: wrap; }
+    label { display: block; margin: 6px 0; }
+    select[multiple] { min-width: 220px; min-height: 120px; }
+    input[type=number] { width: 120px; }
+    .hint { color: #666; font-size: 0.9em; }
+    .btn { padding: 8px 14px; }
+    .cols { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; }
+    .box { border:1px solid #ddd; padding:12px; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>XPS Energy Axis Calibration (ISO 15472-like)</h1>
+    <p class="hint">Upload Au/Ag/Cu CSVs (format: first numeric row starts, columns = Energy, S1..Sk)</p>
+  </header>
+
+  <form id="form" action="/analyze" method="post" enctype="multipart/form-data">
+    <fieldset class="box">
+      <legend>1) CSV files</legend>
+      <div class="row">
+        <label>Au CSV <input type="file" name="au_file" required accept=".csv" /></label>
+        <label>Ag CSV <input type="file" name="ag_file" required accept=".csv" /></label>
+        <label>Cu CSV <input type="file" name="cu_file" required accept=".csv" /></label>
+      </div>
+      <button class="btn" type="button" id="btn-inspect">Inspect columns</button>
+      <span class="hint">This fetches S1..Sk candidates per file.</span>
+      <div class="cols" style="margin-top:12px;">
+        <div>
+          <label>Au columns (multi-select)</label>
+          <select name="au_cols" id="au_cols" multiple></select>
+        </div>
+        <div>
+          <label>Ag columns (multi-select)</label>
+          <select name="ag_cols" id="ag_cols" multiple></select>
+        </div>
+        <div>
+          <label>Cu columns (multi-select)</label>
+          <select name="cu_cols" id="cu_cols" multiple></select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="box">
+      <legend>2) Parameters</legend>
+      <div class="row">
+        <label>Reference BE Au (eV) <input type="number" step="0.01" name="ref_au" value="83.95"></label>
+        <label>Reference BE Ag (eV) <input type="number" step="0.01" name="ref_ag" value="368.22"></label>
+        <label>Reference BE Cu (eV) <input type="number" step="0.01" name="ref_cu" value="932.62"></label>
+      </div>
+      <div class="row">
+        <label>Peak window ± (eV) <input type="number" step="0.1" name="peak_window_eV" value="1.5"></label>
+        <label>FWHM min (eV) <input type="number" step="0.1" name="fwhm_min" value="0.3"></label>
+        <label>FWHM max (eV) <input type="number" step="0.1" name="fwhm_max" value="2.5"></label>
+        <label>η min <input type="number" step="0.01" min="0" max="1" name="eta_min" value="0.0"></label>
+        <label>η max <input type="number" step="0.01" min="0" max="1" name="eta_max" value="1.0"></label>
+      </div>
+      <div class="row">
+        <label># of spectra to adopt <input type="number" name="n_select" value="7" min="1"></label>
+        <label><input type="checkbox" name="randomize"> Randomly select (if more than N)</label>
+        <label>Seed <input type="number" name="seed" placeholder="optional"></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="box">
+      <legend>3) Metadata</legend>
+      <div class="row">
+        <label>Instrument <input type="text" name="instrument" placeholder="e.g., PHI 5000"></label>
+        <label>Operator <input type="text" name="operator" placeholder="Your name"></label>
+      </div>
+      <label style="display:block;">Notes<br>
+        <textarea name="notes" rows="3" style="width: min(900px, 100%)" placeholder="Optional"></textarea>
+      </label>
+    </fieldset>
+
+    <div style="margin-top:16px;">
+      <button class="btn" type="submit">Analyze & Generate</button>
+    </div>
+  </form>
+
+  <script>
+    async function inspectColumns() {
+      const fd = new FormData(document.getElementById('form'));
+      const res = await fetch('/inspect', { method: 'POST', body: fd });
+      if (!res.ok) { alert('Failed to inspect columns'); return; }
+      const js = await res.json();
+      const fill = (id, arr) => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '';
+        (arr || []).forEach(v => {
+          const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o);
+        });
+      };
+      fill('au_cols', js['Au']);
+      fill('ag_cols', js['Ag']);
+      fill('cu_cols', js['Cu']);
+    }
+    document.getElementById('btn-inspect').addEventListener('click', inspectColumns);
+  </script>
+</body>
+</html>
